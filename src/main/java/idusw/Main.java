@@ -16,6 +16,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         /*
         프로그램 시작 위치
+        테스트123123
          */
         Scanner sc = new Scanner(System.in);
     }

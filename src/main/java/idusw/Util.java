@@ -4,36 +4,53 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 /**
  * Util 클래스
  * @author Ki-Chang Kim
  */
 
 public class Util {
-    /**
-     * 입력받은 행정구역의 X좌표 값과 Y좌표 값 검색
-     *
-     * @throws java.io.IOException 입출력
-     * @param firstDist 1차 행정구역 (특별시, 광역시, 도, 특별자치시)
-     * @param secondDist 2차 행정구역 (시, 군, 구)
-     * @param thirdDist 3차 행정구역 (읍, 면, 동)
-     * @return X좌표 값, Y좌표 값
-     */
-    public Location getLocation(String firstDist, String secondDist, String thirdDist) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/storage/db/location.csv"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] columns = line.split(",");
+    private static HttpClient httpClient = HttpClient.newHttpClient();
 
-                if (columns[2].equals(firstDist) &&
-                    (secondDist == null || columns[3].equals(secondDist)) &&
-                    (thirdDist == null || columns[4].equals(thirdDist))) {
-                    String xCord = columns[5];
-                    String yCord = columns[6];
-                    return new Location(xCord, yCord);
-                }
-            }
-        }
-        return null;
+    /**
+     * 공공 데이터 API에 대한 Get 요청을 수행한다.
+     *
+     * @throws java.io.IOException 입출력 예외 처리
+     * @throws java.lang.InterruptedException 잘못된 입력 예외 처리
+     *
+     * @param uri 서비스 요청 URI
+     * @param serviceKey 공공 데이터 API 서비스키
+     * @param baseDate 예보 날짜
+     * @param baseTime 예보 시각
+     * @param xCoord X좌표 값
+     * @param yCoord Y좌표 값
+     *
+     * @return 기상청 예보 데이터
+     */
+    public static String getFromApi(String uri, String serviceKey, String baseDate, String baseTime, String xCoord, String yCoord) throws IOException, InterruptedException {
+        String uriAndParams = "$uri?serviceKey=$serviceKey&base_date=$baseDate&base_time=$baseTime&nx=$nx&ny=$ny&dataType=json&pageNo=1&numOfRows=1000"
+                .replace("$uri", uri)
+                .replace("$serviceKey", serviceKey)
+                .replace("$baseDate", baseDate)
+                .replace("$baseTime", baseTime)
+                .replace("$xCoord", xCoord)
+                .replace("$yCoord", yCoord);
+
+        System.out.println(uriAndParams);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(uriAndParams))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+
+        return response.body();
     }
 }
